@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: geo_postgres
+    environment:
+      POSTGRES_DB: danger
+      POSTGRES_USER: danger
+      POSTGRES_PASSWORD: danger
+    ports:
+      - "5433:5432"
+    

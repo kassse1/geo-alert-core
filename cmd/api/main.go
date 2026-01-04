@@ -1,22 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/rqkhm/geo-alert-core/internal/config"
-	"github.com/rqkhm/geo-alert-core/internal/handler"
+	"github.com/kassse1/geo-alert-core/internal/config"
+	"github.com/kassse1/geo-alert-core/internal/transport"
+	"github.com/kassse1/geo-alert-core/pkg/postgres"
 )
 
 func main() {
-	// Загружаем конфигурацию
+	// 1. Load config
 	cfg := config.Load()
-	fmt.Println("Geo Alert Core is running on port", cfg.Port)
 
-	// Регистрируем HTTP-эндпоинты
-	http.HandleFunc("/health", handler.HealthHandler)
+	// 2. Connect to PostgreSQL
+	db, err := postgres.New(cfg.PostgresDSN)
+	if err != nil {
+		log.Fatal("postgres connection failed:", err)
+	}
+	defer db.Close()
 
-	// Запускаем сервер
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
+	// 3. Create router (db EXISTS here)
+	router := transport.NewRouter(db, cfg)
+
+	// 4. Start server
+	log.Println("Server started on port", cfg.AppPort)
+	log.Fatal(http.ListenAndServe(":"+cfg.AppPort, router))
 }
