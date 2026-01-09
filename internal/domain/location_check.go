@@ -8,9 +8,9 @@ type LocationCheck struct {
 	Lat          float64
 	Lon          float64
 
-	IncidentIDs  []int64    // какие инциденты были найдены
-	HasDanger    bool       // был ли риск
-	DistanceM    int        // минимальная дистанция до зоны
+	IncidentIDs  []int64    
+	HasDanger    bool       
+	DistanceM    int        
 
 	CheckedAt    time.Time
 }
