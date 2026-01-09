@@ -44,7 +44,6 @@ func NewRouter(db *postgres.DB, cfg *config.Config) http.Handler {
 	mux.HandleFunc("/api/v1/location/check", locationHandler.Check)
 	mux.HandleFunc("/api/v1/system/health", handler.Health)
 
-	// ---------- Protected (API-key) ----------
 	// ---------- Incidents stats (MUST BE BEFORE /{id}) ----------
 	mux.Handle(
 		"/api/v1/incidents/stats",
