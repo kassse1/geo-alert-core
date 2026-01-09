@@ -126,7 +126,7 @@ APP_PORT=8080
 POSTGRES_DSN=postgres://danger:danger@localhost:5433/danger?sslmode=disable
 API_KEY=super-secret-key
 STATS_TIME_WINDOW_MINUTES=5
-WEBHOOK_URL=http://localhost:9090/webhook
+WEBHOOK_URL=https://undeficient-itchingly-janel.ngrok-free.dev/webhook
 
 ---
 
@@ -138,7 +138,10 @@ docker compose up -d
 2️⃣ Запуск webhook-заглушки
 go run ./cmd/webhook-mock
 
-3️⃣ Запуск основного API
+3️⃣ Запуск ngrok
+ngrok http 9090
+
+4️⃣ Запуск основного API
 go run ./cmd/api/main.go
 
 ---
