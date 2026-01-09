@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-	// 🔴 ВОТ ЭТОГО НЕ ХВАТАЛО
 	_ = godotenv.Load()
 
 	// 1. Load config

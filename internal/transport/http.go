@@ -21,7 +21,7 @@ func NewRouter(db *postgres.DB, cfg *config.Config) http.Handler {
 	// ---------- Services ----------
 	incidentService := service.NewIncidentService(
 		incidentRepo,
-		checkRepo, // ⬅️ ВАЖНО: у тебя IncidentService ждёт ДВА аргумента
+		checkRepo,
 	)
 
 	webhookService := service.NewWebhookService(cfg.WebhookURL)
@@ -35,7 +35,7 @@ func NewRouter(db *postgres.DB, cfg *config.Config) http.Handler {
 	// ---------- Handlers ----------
 	incidentHandler := handler.NewIncidentHandler(
 		incidentService,
-		cfg.StatsTimeWindowMinutes, // ⬅️ ВАЖНО: у тебя handler ждёт второй аргумент
+		cfg.StatsTimeWindowMinutes,
 	)
 
 	locationHandler := handler.NewLocationHandler(locationService)
