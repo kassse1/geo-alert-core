@@ -28,13 +28,13 @@ func (s *LocationService) CheckLocation(
 	lat, lon float64,
 ) ([]domain.Incident, error) {
 
-	// 1️⃣ Получаем только АКТИВНЫЕ инциденты
+	//  Получаем только АКТИВНЫЕ инциденты
 	incidents, err := s.incidentRepo.GetActive()
 	if err != nil {
 		return nil, err
 	}
 
-	// 2️⃣ Фильтруем по расстоянию
+	//  Фильтруем по расстоянию
 	nearby := make([]domain.Incident, 0)
 	for _, i := range incidents {
 		distance := DistanceMeters(lat, lon, i.Lat, i.Lon)
@@ -43,14 +43,14 @@ func (s *LocationService) CheckLocation(
 		}
 	}
 
-	// 3️⃣ Сохраняем факт проверки (не блокирует ответ)
+	//  Сохраняем факт проверки (не блокирует ответ)
 	_ = s.checkRepo.Save(&domain.LocationCheck{
 		UserID: userID,
 		Lat:    lat,
 		Lon:    lon,
 	})
 
-	// 4️⃣ Асинхронно отправляем webhook, если есть опасности
+	//  Асинхронно отправляем webhook, если есть опасности
 	if len(nearby) > 0 && s.webhook != nil {
 		go s.webhook.Send(userID, nearby)
 	}
