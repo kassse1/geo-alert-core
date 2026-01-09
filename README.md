@@ -130,6 +130,19 @@ WEBHOOK_URL=https://undeficient-itchingly-janel.ngrok-free.dev/webhook
 
 ---
 
+🧪 Проверка вебхуков (End-to-End)
+
+Запусти webhook-mock
+
+Создай активный инцидент
+
+Выполни location/check с координатами рядом с инцидентом
+
+В консоли webhook-сервера появится входящий JSON
+
+---
+
+```json
 ▶️ Запуск проекта
 
 1️⃣ Запуск PostgreSQL
@@ -144,10 +157,28 @@ ngrok http 9090
 4️⃣ Запуск основного API
 go run ./cmd/api/main.go
 
----
-
 🧪 Примеры запросов (PowerShell)
-Создание инцидента
+1️⃣ ЗАПУСК ИНФРАСТРУКТУРЫ (PostgreSQL)
+docker compose up -d
+Проверка : docker ps
+Ты должен увидеть контейнер с PostgreSQL.
+
+2️⃣ ЗАПУСК WEBHOOK-СЕРВЕРА (ЗАГЛУШКА)
+go run ./cmd/webhook-mock
+Ожидаемый вывод : Webhook mock listening on :9090
+
+3️⃣ ЗАПУСК NGROK 
+ngrok http 9090
+
+4️⃣ ЗАПУСК ОСНОВНОГО API
+go run ./cmd/api/main.go
+Ожидаемый вывод : Server started on port 8080
+
+5️⃣ HEALTH CHECK
+Invoke-RestMethod http://localhost:8080/api/v1/system/health
+Ожидаемый ответ : {"status":"ok"}
+
+6️⃣ СОЗДАНИЕ ИНЦИДЕНТА (CRUD — CREATE)
 Invoke-RestMethod `
   -Uri "http://localhost:8080/api/v1/incidents" `
   -Method Post `
@@ -159,26 +190,74 @@ Invoke-RestMethod `
     lon = 76.88
     radius_m = 500
   } | ConvertTo-Json)
+Ожидаемо : JSON с id.
 
-Проверка координат
+7️⃣ ПОЛУЧЕНИЕ СПИСКА ИНЦИДЕНТОВ (READ + PAGINATION)
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/v1/incidents?page=1&limit=10" `
+  -Headers @{ "X-API-Key" = "super-secret-key" }
+
+8️⃣ ПОЛУЧЕНИЕ ИНЦИДЕНТА ПО ID
+(подставь реальный ID)
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/v1/incidents/1" `
+  -Headers @{ "X-API-Key" = "super-secret-key" }
+
+9️⃣ ОБНОВЛЕНИЕ ИНЦИДЕНТА (UPDATE)
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/v1/incidents/1" `
+  -Method Put `
+  -Headers @{ "X-API-Key" = "super-secret-key" } `
+  -ContentType "application/json" `
+  -Body (@{
+    title = "Updated fire"
+    lat = 43.24
+    lon = 76.89
+    radius_m = 600
+  } | ConvertTo-Json)
+Ожидаемо: 204 No Content.
+
+🔟 ПРОВЕРКА КООРДИНАТ (PUBLIC API)
 Invoke-RestMethod `
   -Uri "http://localhost:8080/api/v1/location/check" `
   -Method Post `
   -ContentType "application/json" `
   -Body (@{
-    user_id = "user1"
+    user_id = "user_test"
     lat = 43.23
     lon = 76.88
   } | ConvertTo-Json)
 
----
 
-🧪 Проверка вебхуков (End-to-End)
+Ожидаемо : JSON со списком инцидентов
+webhook уходит асинхронно
 
-Запусти webhook-mock
+1️⃣1️⃣ ПРОВЕРКА ВЕБХУКА (END-TO-END)
+В webhook-mock ты должен увидеть:
+WEBHOOK RECEIVED:
+map[user_id:user_test incidents:[...] sent_at:...]
+В ngrok : POST /webhook 200 OK
 
-Создай активный инцидент
+1️⃣2️⃣ СТАТИСТИКА
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/v1/incidents/stats?minutes=5" `
+  -Headers @{ "X-API-Key" = "super-secret-key" }
+Ожидаемый ответ : {"user_count":1}
 
-Выполни location/check с координатами рядом с инцидентом
+1️⃣3️⃣ ДЕАКТИВАЦИЯ ИНЦИДЕНТА (DELETE = SOFT DELETE)
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/v1/incidents/1" `
+  -Method Delete `
+  -Headers @{ "X-API-Key" = "super-secret-key" }
 
-В консоли webhook-сервера появится входящий JSON
+1️⃣4️⃣ ПРОВЕРКА, ЧТО ИНЦИДЕНТ БОЛЬШЕ НЕ ВЫДАЁТСЯ
+Invoke-RestMethod `
+  -Uri "http://localhost:8080/api/v1/location/check" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body (@{
+    user_id = "user_test_2"
+    lat = 43.23
+    lon = 76.88
+  } | ConvertTo-Json)
+Ожидаемо : []
