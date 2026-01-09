@@ -122,10 +122,15 @@ Haversine formula (гео-расчёты)
 ---
 
 ⚙️ Конфигурация (.env)
+
 APP_PORT=8080
+
 POSTGRES_DSN=postgres://danger:danger@localhost:5433/danger?sslmode=disable
+
 API_KEY=super-secret-key
+
 STATS_TIME_WINDOW_MINUTES=5
+
 WEBHOOK_URL=https://undeficient-itchingly-janel.ngrok-free.dev/webhook
 
 ---
