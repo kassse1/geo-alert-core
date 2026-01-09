@@ -57,9 +57,14 @@ func (s *IncidentService) Deactivate(id int64) error {
 // Stats
 // =====================
 
+func (s *IncidentService) GetUserStats(minutes int) (int, error) {
+	return s.checkRepo.CountUniqueUsersLastMinutes(minutes)
+}
+
 func (s *IncidentService) Stats(minutes int) (int, error) {
 	if minutes <= 0 {
 		return 0, errors.New("minutes must be positive")
 	}
-	return s.checkRepo.CountUniqueUsersSince(minutes)
+	return s.checkRepo.CountUniqueUsersLastMinutes(minutes)
+
 }

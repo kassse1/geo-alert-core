@@ -45,6 +45,16 @@ func NewRouter(db *postgres.DB, cfg *config.Config) http.Handler {
 	mux.HandleFunc("/api/v1/system/health", handler.Health)
 
 	// ---------- Protected (API-key) ----------
+	// ---------- Incidents stats (MUST BE BEFORE /{id}) ----------
+	mux.Handle(
+		"/api/v1/incidents/stats",
+		middleware.APIKeyMiddleware(
+			cfg.APIKey,
+			http.HandlerFunc(incidentHandler.Stats),
+		),
+	)
+
+	// ---------- Incidents collection ----------
 	mux.Handle(
 		"/api/v1/incidents",
 		middleware.APIKeyMiddleware(
@@ -62,6 +72,7 @@ func NewRouter(db *postgres.DB, cfg *config.Config) http.Handler {
 		),
 	)
 
+	// ---------- Incidents by ID ----------
 	mux.Handle(
 		"/api/v1/incidents/",
 		middleware.APIKeyMiddleware(

@@ -39,3 +39,19 @@ func (r *LocationCheckPostgresRepository) Save(c *domain.LocationCheck) error {
 	_, err := r.db.ExecContext(ctx, query, c.UserID, c.Lat, c.Lon)
 	return err
 }
+
+func (r *LocationCheckPostgresRepository) CountUniqueUsersLastMinutes(minutes int) (int, error) {
+	query := `
+		SELECT COUNT(DISTINCT user_id)
+		FROM location_checks
+		WHERE checked_at >= NOW() - ($1 * INTERVAL '1 minute')
+	`
+
+	var count int
+	err := r.db.QueryRow(query, minutes).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

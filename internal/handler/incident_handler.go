@@ -192,3 +192,34 @@ func (h *IncidentHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+/*
+=====================
+STATS
+GET /api/v1/incidents/stats
+=====================
+*/
+
+func (h *IncidentHandler) Stats(w http.ResponseWriter, r *http.Request) {
+	minutesStr := r.URL.Query().Get("minutes")
+
+	minutes := h.statsWindowMinutes
+	if minutesStr != "" {
+		if v, err := strconv.Atoi(minutesStr); err == nil && v > 0 {
+			minutes = v
+		}
+	}
+
+	count, err := h.service.GetUserStats(minutes)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp := map[string]int{
+		"user_count": count,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(resp)
+}
