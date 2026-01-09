@@ -4,12 +4,17 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/joho/godotenv"
+
 	"github.com/kassse1/geo-alert-core/internal/config"
 	"github.com/kassse1/geo-alert-core/internal/transport"
 	"github.com/kassse1/geo-alert-core/pkg/postgres"
 )
 
 func main() {
+	// 🔴 ВОТ ЭТОГО НЕ ХВАТАЛО
+	_ = godotenv.Load()
+
 	// 1. Load config
 	cfg := config.Load()
 
@@ -20,7 +25,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// 3. Create router (db EXISTS here)
+	// 3. Create router
 	router := transport.NewRouter(db, cfg)
 
 	// 4. Start server

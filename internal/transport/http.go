@@ -14,90 +14,72 @@ import (
 func NewRouter(db *postgres.DB, cfg *config.Config) http.Handler {
 	mux := http.NewServeMux()
 
-	// =====================
-	// Repositories
-	// =====================
+	// ---------- Repositories ----------
 	incidentRepo := repository.NewIncidentPostgresRepository(db.DB)
 	checkRepo := repository.NewLocationCheckPostgresRepository(db.DB)
 
-	// =====================
-	// Services
-	// =====================
+	// ---------- Services ----------
 	incidentService := service.NewIncidentService(
 		incidentRepo,
-		checkRepo,
+		checkRepo, // ⬅️ ВАЖНО: у тебя IncidentService ждёт ДВА аргумента
 	)
+
+	webhookService := service.NewWebhookService(cfg.WebhookURL)
 
 	locationService := service.NewLocationService(
 		incidentRepo,
 		checkRepo,
+		webhookService,
 	)
 
-	// =====================
-	// Handlers
-	// =====================
+	// ---------- Handlers ----------
 	incidentHandler := handler.NewIncidentHandler(
 		incidentService,
-		cfg.StatsTimeWindowMinutes,
+		cfg.StatsTimeWindowMinutes, // ⬅️ ВАЖНО: у тебя handler ждёт второй аргумент
 	)
 
 	locationHandler := handler.NewLocationHandler(locationService)
 
-	// =====================
-	// Public endpoints
-	// =====================
-	mux.HandleFunc("/api/v1/system/health", handler.Health)
+	// ---------- Public ----------
 	mux.HandleFunc("/api/v1/location/check", locationHandler.Check)
+	mux.HandleFunc("/api/v1/system/health", handler.Health)
 
-	// =====================
-	// Protected: incidents collection
-	// =====================
-	mux.Handle("/api/v1/incidents", middleware.APIKeyMiddleware(
-		cfg.APIKey,
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			switch r.Method {
-			case http.MethodPost:
-				incidentHandler.Create(w, r)
-			case http.MethodGet:
-				incidentHandler.List(w, r)
-			default:
-				http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			}
-		}),
-	))
+	// ---------- Protected (API-key) ----------
+	mux.Handle(
+		"/api/v1/incidents",
+		middleware.APIKeyMiddleware(
+			cfg.APIKey,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodPost:
+					incidentHandler.Create(w, r)
+				case http.MethodGet:
+					incidentHandler.List(w, r)
+				default:
+					http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+				}
+			}),
+		),
+	)
 
-	// =====================
-	// Protected: incidents by ID
-	// =====================
-	mux.Handle("/api/v1/incidents/", middleware.APIKeyMiddleware(
-		cfg.APIKey,
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			switch r.Method {
-			case http.MethodGet:
-				incidentHandler.Get(w, r)
-			case http.MethodPut:
-				incidentHandler.Update(w, r)
-			case http.MethodDelete:
-				incidentHandler.Delete(w, r)
-			default:
-				http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			}
-		}),
-	))
-
-	// =====================
-	// Protected: stats
-	// =====================
-	mux.Handle("/api/v1/incidents/stats", middleware.APIKeyMiddleware(
-		cfg.APIKey,
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method == http.MethodGet {
-				incidentHandler.Stats(w, r)
-				return
-			}
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		}),
-	))
+	mux.Handle(
+		"/api/v1/incidents/",
+		middleware.APIKeyMiddleware(
+			cfg.APIKey,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodGet:
+					incidentHandler.GetByID(w, r)
+				case http.MethodPut:
+					incidentHandler.Update(w, r)
+				case http.MethodDelete:
+					incidentHandler.Deactivate(w, r)
+				default:
+					http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+				}
+			}),
+		),
+	)
 
 	return mux
 }

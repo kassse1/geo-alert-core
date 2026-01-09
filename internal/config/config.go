@@ -11,13 +11,15 @@ type Config struct {
 	PostgresDSN            string
 	APIKey                 string
 	StatsTimeWindowMinutes int
+	WebhookURL             string
 }
 
 func Load() *Config {
 	appPort := getEnv("APP_PORT", "8080")
 	postgresDSN := getEnv("POSTGRES_DSN", "")
-	apiKey := getEnv("API_KEY", "")
+	apiKey := getEnv("API_KEY", "secret123")
 	statsMinutesStr := getEnv("STATS_TIME_WINDOW_MINUTES", "5")
+	webhookURL := getEnv("WEBHOOK_URL", "")
 
 	statsMinutes, err := strconv.Atoi(statsMinutesStr)
 	if err != nil {
@@ -37,6 +39,7 @@ func Load() *Config {
 		PostgresDSN:            postgresDSN,
 		APIKey:                 apiKey,
 		StatsTimeWindowMinutes: statsMinutes,
+		WebhookURL:             webhookURL,
 	}
 }
 
